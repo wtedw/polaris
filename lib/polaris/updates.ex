@@ -977,12 +977,21 @@ defmodule Polaris.Updates do
   given state map.
   """
   defn apply_updates(params, updates, state \\ nil) do
-    new_params =
-      deep_merge(params, updates, fn x, u ->
+
+    intersect_params = map_intersect(updates, params)
+
+    new_intersect_params =
+      deep_merge(intersect_params, updates, fn x, u ->
         Nx.add(x, Nx.as_type(u, Nx.type(x)))
       end)
 
+    new_params = merge_state(params, new_intersect_params)
+
     merge_state(new_params, state)
+  end
+
+  deftransformp map_intersect(updates, params) do
+    Map.intersect(updates, params)
   end
 
   deftransformp merge_state(params, state) do
@@ -1002,6 +1011,7 @@ defmodule Polaris.Updates do
   defp merge_inner(params, state) when is_map(params) and is_map(state) do
     Map.merge(params, state, fn _, s1, s2 -> merge_inner(s1, s2) end)
   end
+
 
   ## Helpers
 
